@@ -720,32 +720,38 @@ async function handleFormSubmit(e) {
 
     // Step 1: Validation complete
     updateStep(1, 'done');
-    updateStep(2, 'active');
-    setProgress(35, state.uploadedFile 
-      ? (state.lang === 'ar' ? 'جاري تجهيز وتشفير المرفق...' : 'Preparing CV attachment...')
-      : (state.lang === 'ar' ? 'تجهيز نص الرسالة وبيانات الإرسال...' : 'Preparing email content...'));
-
-    await wait(400);
-
-    // Step 2: Attachment / Data complete
     updateStep(2, 'done');
     updateStep(3, 'active');
-    setProgress(60, state.lang === 'ar' ? `جاري الإرسال إلى ${validRecipients.length} جهة توظيف...` : `Dispatching to ${validRecipients.length} recipients...`);
+    setProgress(50, state.lang === 'ar' ? `جاري الإرسال السريع إلى ${validRecipients.length} جهة...` : `Dispatching to ${validRecipients.length} recipients...`);
 
-    // Call API Endpoint
-    const response = await fetch('/api/send', {
-      method: 'POST',
-      body: formData
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      if (data && data.results && data.results.length > 0) {
-        renderDeliveryResults(data.results);
+    // Smooth active progress simulation while API request executes
+    let progressVal = 50;
+    const progressTimer = setInterval(() => {
+      if (progressVal < 90) {
+        progressVal += 10;
+        setProgress(progressVal, state.lang === 'ar' ? `جاري الإرسال (${validRecipients.length} جهة)...` : `Dispatching to ${validRecipients.length} recipients...`);
       }
-      const failReason = data.message || (data.results && data.results[0] && data.results[0].error) || 'حدث خطأ أثناء الإرسال';
-      throw new Error(failReason);
+    }, 200);
+
+    let data;
+    try {
+      // Call API Endpoint
+      const response = await fetch('/api/send', {
+        method: 'POST',
+        body: formData
+      });
+
+      data = await response.json();
+
+      if (!response.ok || !data.success) {
+        if (data && data.results && data.results.length > 0) {
+          renderDeliveryResults(data.results);
+        }
+        const failReason = data.message || (data.results && data.results[0] && data.results[0].error) || 'حدث خطأ أثناء الإرسال';
+        throw new Error(failReason);
+      }
+    } finally {
+      clearInterval(progressTimer);
     }
 
     // Step 3 & 4: Done!

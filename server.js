@@ -35,23 +35,7 @@ const DEFAULT_SMTP = {
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Configure Multer for file uploads (stored in memory or disk)
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `cv-${uniqueSuffix}${ext}`);
-  }
-});
-
+// In-memory Multer storage for ultra-fast uploads (no disk I/O / OneDrive sync delay)
 const fileFilter = (req, file, cb) => {
   const allowedExtensions = ['.pdf', '.doc', '.docx'];
   const ext = path.extname(file.originalname).toLowerCase();
@@ -63,7 +47,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
   fileFilter: fileFilter
 });
@@ -72,6 +56,74 @@ const upload = multer({
 function isValidEmail(email) {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return re.test(String(email).trim().toLowerCase());
+}
+
+// Transporter Cache with Connection Pooling for instant sending
+const transporterCache = new Map();
+
+function getTransporter(config) {
+  const service = config.service || 'gmail';
+  const host = config.host || 'smtp.gmail.com';
+  const port = parseInt(config.port) || 465;
+  const user = config.user;
+  const pass = config.pass;
+
+  const cacheKey = `${service}_${host}_${port}_${user}_${pass}`;
+  if (transporterCache.has(cacheKey)) {
+    return transporterCache.get(cacheKey);
+  }
+
+  const transportOptions = (service && service !== 'custom')
+    ? {
+        service: service,
+        auth: { user, pass },
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+        rateDelta: 1000,
+        rateLimit: 10
+      }
+    : {
+        host: host,
+        port: port,
+        secure: port === 465,
+        auth: { user, pass },
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+        rateDelta: 1000,
+        rateLimit: 10
+      };
+
+  const transporter = nodemailer.createTransport(transportOptions);
+  transporterCache.set(cacheKey, transporter);
+  return transporter;
+}
+
+// Pre-warm the SMTP connection pool at boot so the first email sends with zero handshake delay
+if (DEFAULT_SMTP.user && DEFAULT_SMTP.pass) {
+  try {
+    const prewarmed = getTransporter(DEFAULT_SMTP);
+    prewarmed.verify().then(() => {
+      console.log('⚡ [SMTP Pool] Fast connection pool pre-warmed & ready.');
+    }).catch(err => {
+      console.warn('⚠️ [SMTP Pool] Pre-warm notice:', err.message);
+    });
+  } catch (e) {}
+}
+
+// Concurrent dispatcher helper
+async function sendConcurrently(items, concurrency, fn) {
+  const results = new Array(items.length);
+  let currentIndex = 0;
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (currentIndex < items.length) {
+      const idx = currentIndex++;
+      results[idx] = await fn(items[idx], idx);
+    }
+  });
+  await Promise.all(workers);
+  return results;
 }
 
 // Endpoint: Test SMTP Connection
@@ -88,27 +140,20 @@ app.post('/api/test-smtp', async (req, res) => {
       });
     }
 
-    let transportOptions = {};
-    if (service && service !== 'custom') {
-      transportOptions = {
-        service: service,
-        auth: { user: finalUser, pass: finalPass }
-      };
-    } else {
-      transportOptions = {
-        host: host || 'smtp.gmail.com',
-        port: parseInt(port) || 465,
-        secure: secure !== undefined ? secure : true,
-        auth: { user: finalUser, pass: finalPass }
-      };
-    }
+    const transporter = getTransporter({
+      service: service || DEFAULT_SMTP.service,
+      host: host || DEFAULT_SMTP.host,
+      port: port || DEFAULT_SMTP.port,
+      secure: secure !== undefined ? secure : true,
+      user: finalUser,
+      pass: finalPass
+    });
 
-    const transporter = nodemailer.createTransport(transportOptions);
     await transporter.verify();
 
     return res.json({
       success: true,
-      message: 'تم التحقق من إعدادات البريد بنجاح! الاتصال جاهز.'
+      message: 'تم التحقق من إعدادات البريد بنجاح! الاتصال جاهز وسريع.'
     });
   } catch (error) {
     console.error('SMTP test error:', error);
@@ -121,8 +166,6 @@ app.post('/api/test-smtp', async (req, res) => {
 
 // Endpoint: Send CV Emails
 app.post('/api/send', upload.single('cv'), async (req, res) => {
-  let uploadedFilePath = null;
-  let originalFileName = null;
   try {
     const senderEmail = req.body.senderEmail ? req.body.senderEmail.trim() : '';
     let recipients = [];
@@ -177,55 +220,42 @@ app.post('/api/send', upload.single('cv'), async (req, res) => {
       });
     }
 
-    // Check attached file (optional)
-    if (req.file) {
-      uploadedFilePath = req.file.path;
-      originalFileName = req.file.originalname;
-    }
-
     // Determine effective SMTP credentials with solid fallback
     const userToUse = (smtpConfig && smtpConfig.user && smtpConfig.user.trim()) ? smtpConfig.user.trim() : DEFAULT_SMTP.user;
     const passToUse = (smtpConfig && smtpConfig.pass && smtpConfig.pass.trim()) ? smtpConfig.pass.trim() : DEFAULT_SMTP.pass;
     const serviceToUse = (smtpConfig && smtpConfig.service) ? smtpConfig.service : DEFAULT_SMTP.service;
+    const hostToUse = (smtpConfig && smtpConfig.host) || DEFAULT_SMTP.host;
+    const portToUse = parseInt(smtpConfig && smtpConfig.port) || DEFAULT_SMTP.port;
 
     const shouldSendReal = (mode === 'real') || Boolean(userToUse && passToUse);
 
-    const deliveryResults = [];
+    console.log(`[SEND REQUEST] Mode: ${mode}, Recipients: ${validRecipients.length}, Real: ${shouldSendReal}`);
 
-    console.log(`[SEND REQUEST] Mode: ${mode}, Recipients count: ${validRecipients.length}, Real: ${shouldSendReal}`);
+    let deliveryResults = [];
 
     if (shouldSendReal && userToUse && passToUse) {
-      // Build Nodemailer transporter
-      let transportOptions = {};
-      if (serviceToUse && serviceToUse !== 'custom') {
-        transportOptions = {
-          service: serviceToUse,
-          auth: { user: userToUse, pass: passToUse }
-        };
-      } else {
-        transportOptions = {
-          host: (smtpConfig && smtpConfig.host) || 'smtp.gmail.com',
-          port: parseInt(smtpConfig && smtpConfig.port) || 465,
-          secure: true,
-          auth: { user: userToUse, pass: passToUse }
-        };
-      }
+      // Get or create pooled transporter
+      const transporter = getTransporter({
+        service: serviceToUse,
+        host: hostToUse,
+        port: portToUse,
+        user: userToUse,
+        pass: passToUse
+      });
 
-      const transporter = nodemailer.createTransport(transportOptions);
-
-      // Build attachments array if file exists
-      const attachments = (uploadedFilePath && fs.existsSync(uploadedFilePath)) ? [
+      // Prepare in-memory attachment (zero disk I/O)
+      const attachments = req.file ? [
         {
-          filename: originalFileName || path.basename(uploadedFilePath),
-          path: uploadedFilePath
+          filename: req.file.originalname,
+          content: req.file.buffer
         }
       ] : [];
 
-      // Send personalized email to each recipient separately for privacy
-      for (let i = 0; i < validRecipients.length; i++) {
-        const recipient = validRecipients[i];
+      const startTime = Date.now();
+
+      // Send to recipients concurrently (up to 5 parallel connections via SMTP pool)
+      deliveryResults = await sendConcurrently(validRecipients, 5, async (recipient, i) => {
         try {
-          console.log(`[DISPATCHING] Sending email ${i + 1}/${validRecipients.length}...`);
           const mailOptions = {
             from: `"${senderEmail}" <${userToUse}>`,
             replyTo: senderEmail,
@@ -245,44 +275,34 @@ app.post('/api/send', upload.single('cv'), async (req, res) => {
           };
 
           const info = await transporter.sendMail(mailOptions);
-          console.log(`[SENT SUCCESS] Email ${i + 1} sent successfully.`);
-          deliveryResults.push({
+          return {
             recipient: recipient,
             status: 'sent',
-            messageId: info.messageId || `msg_${Date.now()}`,
+            messageId: info.messageId || `msg_${Date.now()}_${i}`,
             timestamp: new Date().toISOString()
-          });
+          };
         } catch (err) {
-          console.error(`[SEND ERROR] Email ${i + 1} failed:`, err.message);
-          deliveryResults.push({
+          console.error(`[SEND ERROR] Failed for ${recipient}:`, err.message);
+          return {
             recipient: recipient,
             status: 'failed',
             error: err.message || 'تعذر الإرسال عبر خادم البريد',
             timestamp: new Date().toISOString()
-          });
+          };
         }
-      }
-    } else {
-      // Simulation / Instant Dispatch Mode
-      for (const recipient of validRecipients) {
-        await new Promise(resolve => setTimeout(resolve, 350));
-        deliveryResults.push({
-          recipient: recipient,
-          status: 'sent',
-          simulated: true,
-          messageId: `sim_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-          timestamp: new Date().toISOString()
-        });
-      }
-    }
+      });
 
-    // Immediately clean up temporary uploaded file for strict privacy
-    if (uploadedFilePath && fs.existsSync(uploadedFilePath)) {
-      try {
-        fs.unlinkSync(uploadedFilePath);
-      } catch (e) {
-        // ignore cleanup error
-      }
+      console.log(`[DISPATCH COMPLETE] Sent ${deliveryResults.length} emails in ${Date.now() - startTime}ms`);
+
+    } else {
+      // Instant Dispatch (Simulation)
+      deliveryResults = validRecipients.map(recipient => ({
+        recipient: recipient,
+        status: 'sent',
+        simulated: true,
+        messageId: `sim_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+        timestamp: new Date().toISOString()
+      }));
     }
 
     const successCount = deliveryResults.filter(r => r.status === 'sent').length;
@@ -290,7 +310,7 @@ app.post('/api/send', upload.single('cv'), async (req, res) => {
 
     const firstFailed = deliveryResults.find(r => r.status === 'failed');
     const responseMessage = successCount > 0
-      ? 'تم الإرسال بنجاح!'
+      ? 'تم الإرسال بنجاح وبسرعة فائقة!'
       : (firstFailed ? `فشل الإرسال: ${firstFailed.error}` : 'فشل إرسال البريد');
 
     return res.json({
@@ -306,16 +326,12 @@ app.post('/api/send', upload.single('cv'), async (req, res) => {
       results: deliveryResults,
       sender: senderEmail,
       subject: subject,
-      fileName: originalFileName,
+      fileName: req.file ? req.file.originalname : null,
       timestamp: new Date().toISOString()
     });
 
   } catch (err) {
     console.error('Send error:', err);
-    // Cleanup on error
-    if (uploadedFilePath && fs.existsSync(uploadedFilePath)) {
-      try { fs.unlinkSync(uploadedFilePath); } catch (e) { }
-    }
     return res.status(500).json({
       success: false,
       message: 'حدث خطأ أثناء معالجة الطلب: ' + (err.message || 'خطأ غير متوقع')
