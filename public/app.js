@@ -16,7 +16,7 @@ const state = {
     port: 465,
     secure: true,
     user: 'alqashar0@gmail.com',
-    pass: 'nddg anzt zdke ineb'
+    pass: ''
   },
   lastDeliveryReport: null
 };
@@ -1132,7 +1132,7 @@ function loadSavedSmtpSettings() {
     let cfg = {
       provider: 'gmail',
       user: 'alqashar0@gmail.com',
-      pass: 'nddg anzt zdke ineb',
+      pass: '',
       mode: 'real'
     };
     if (raw) {
@@ -1155,7 +1155,7 @@ function loadSavedSmtpSettings() {
       port: cfg.provider === 'custom' ? (parseInt(cfg.port) || 465) : 465,
       secure: true,
       user: cfg.user || 'alqashar0@gmail.com',
-      pass: cfg.pass || 'nddg anzt zdke ineb'
+      pass: cfg.pass || ''
     };
 
     const realRadio = document.querySelector('input[name="deliveryMode"][value="real"]');

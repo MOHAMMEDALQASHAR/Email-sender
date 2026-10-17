@@ -225,11 +225,9 @@ app.post('/api/send', upload.single('cv'), async (req, res) => {
       for (const recipient of validRecipients) {
         try {
           console.log(`[DISPATCHING] Sending to: ${recipient}...`);
-          const senderDisplayName = req.body.senderName ? req.body.senderName.trim() : '';
-          const fromHeader = senderDisplayName ? `"${senderDisplayName}" <${userToUse}>` : userToUse;
           const mailOptions = {
-            from: fromHeader,
-            replyTo: senderEmail || userToUse,
+            from: `"${senderEmail}" <${userToUse}>`,
+            replyTo: senderEmail,
             to: recipient,
             subject: subject,
             text: message,
@@ -292,8 +290,8 @@ app.post('/api/send', upload.single('cv'), async (req, res) => {
     const failCount = deliveryResults.filter(r => r.status === 'failed').length;
 
     const firstFailed = deliveryResults.find(r => r.status === 'failed');
-    const responseMessage = successCount > 0 
-      ? 'تم الإرسال بنجاح!' 
+    const responseMessage = successCount > 0
+      ? 'تم الإرسال بنجاح!'
       : (firstFailed ? `فشل الإرسال: ${firstFailed.error}` : 'فشل إرسال البريد');
 
     return res.json({
@@ -317,7 +315,7 @@ app.post('/api/send', upload.single('cv'), async (req, res) => {
     console.error('Send error:', err);
     // Cleanup on error
     if (uploadedFilePath && fs.existsSync(uploadedFilePath)) {
-      try { fs.unlinkSync(uploadedFilePath); } catch (e) {}
+      try { fs.unlinkSync(uploadedFilePath); } catch (e) { }
     }
     return res.status(500).json({
       success: false,
