@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CV Email Sender | موقع إرسال السيرة الذاتية عبر البريد الإلكتروني</title>
+  <meta name="description" content="موقع إلكتروني يتيح للمستخدم إرسال سيرته الذاتية (CV) إلى الشركات ومسؤولي التوظيف عبر البريد الإلكتروني بسهولة وسرعة واحترافية.">
+  
+  <!-- Google Fonts: Cairo & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome 6 (for rich icons) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Canvas Confetti for celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar" id="navbar">
+    <div class="nav-container">
+      
+      <!-- Brand Logo & Title -->
+      <a href="#" class="brand-link" id="brandLink">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="20" height="16" x="2" y="4" rx="3"></rect>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+            <path d="M7 15l2 2 4-4" stroke="currentColor" stroke-width="2"></path>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">CV Email Sender</span>
+          <span class="brand-subtitle" data-i18n="brand_subtitle">موقع إرسال السيرة الذاتية</span>
+        </div>
+      </a>
+
+      <!-- Controls & Navigation Links -->
+      <div class="nav-actions">
+        
+        <!-- Language Switcher -->
+        <div class="lang-switch-container" role="group" aria-label="Language selector">
+          <button type="button" class="lang-btn" id="langEnBtn" onclick="setLanguage('en')">
+            <i class="fa-solid fa-globe"></i> English
+          </button>
+          <button type="button" class="lang-btn active" id="langArBtn" onclick="setLanguage('ar')">
+            العربية
+          </button>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="nav-menu">
+          <button type="button" class="nav-link active" onclick="scrollToTop()">
+            <i class="fa-solid fa-house"></i>
+            <span data-i18n="nav_home">الرئيسية</span>
+          </button>
+          <button type="button" class="nav-link" onclick="openModal('guideModal')">
+            <i class="fa-solid fa-book-open"></i>
+            <span data-i18n="nav_guide">دليل الاستخدام</span>
+          </button>
+          <button type="button" class="nav-link nav-btn-outline" onclick="openModal('historyModal')">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span data-i18n="nav_history">سجل الإرسال</span>
+            <span class="badge-counter" id="historyCounter">0</span>
+          </button>
+        </nav>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-layout">
+    <div class="container-grid">
+
+      <!-- LEFT COLUMN: The Email Sender Form Card -->
+      <section class="card form-card" id="formCard">
+        
+        <!-- Form Header Banner -->
+        <div class="form-header-banner">
+          <div class="header-icon-box">
+            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+              <path d="m16 19 2 2 4-4"></path>
+            </svg>
+          </div>
+          <div class="header-banner-text">
+            <h1 class="header-title" data-i18n="form_title">أرسل سيرتك الذاتية بسهولة</h1>
+            <p class="header-subtitle" data-i18n="form_subtitle">إلى شركة واحدة أو عدة شركات مع رسالة مخصصة</p>
+          </div>
+        </div>
+
+        <form id="cvEmailForm" onsubmit="handleFormSubmit(event)" novalidate>
+          
+          <!-- Field 1: Sender Email -->
+          <div class="form-group">
+            <div class="label-row">
+              <div class="label-icon"><i class="fa-solid fa-user"></i></div>
+              <div class="label-text">
+                <span class="label-primary" data-i18n="sender_email_label">بريدك الإلكتروني (المرسل)</span>
+                <span class="label-secondary">Your Email (Sender)</span>
+              </div>
+            </div>
+            <div class="input-wrapper">
+              <span class="input-icon"><i class="fa-regular fa-envelope"></i></span>
+              <input 
+                type="email" 
+                id="senderEmail" 
+                class="form-control" 
+                placeholder="example@email.com" 
+                value="alqashar0@gmail.com"
+                required 
+                autocomplete="email"
+                dir="ltr"
+              >
+              <span class="validation-status" id="senderEmailStatus"></span>
+            </div>
+          </div>
+
+          <!-- Field 2: Recipient Email(s) -->
+          <div class="form-group">
+            <div class="label-row">
+              <div class="label-icon"><i class="fa-solid fa-user-group"></i></div>
+              <div class="label-text">
+                <span class="label-primary" data-i18n="recipient_email_label">بريد المستلم (المستلمون)</span>
+                <span class="label-secondary">Recipient Email(s)</span>
+              </div>
+              <div class="label-badge-box">
+                <span class="recipients-count-badge" id="recipientsCountBadge">0 مستلم</span>
+                <button type="button" class="btn-bulk-import" onclick="openBulkEmailModal()" data-i18n="bulk_import_btn">
+                  <i class="fa-solid fa-paste"></i> لصق مجمّع
+                </button>
+              </div>
+            </div>
+
+            <!-- Chips Container + Input -->
+            <div class="recipients-box" id="recipientsBox" onclick="focusRecipientInput()">
+              <div class="recipients-chips" id="recipientsChips"></div>
+              <div class="input-inline-wrapper">
+                <span class="input-icon" id="recipientIcon"><i class="fa-regular fa-envelope"></i></span>
+                <input 
+                  type="text" 
+                  id="recipientInput" 
+                  class="recipient-inline-input" 
+                  placeholder="example@company.com" 
+                  autocomplete="off"
+                  dir="ltr"
+                >
+              </div>
+            </div>
+            
+            <div class="field-hint">
+              <span data-i18n="recipient_hint">يمكنك إضافة عدة عناوين بريد إلكتروني مفصولة بفاصلة (,) أو الضغط على Enter</span>
+              <span class="hint-en">You can add multiple email addresses separated by a comma (,)</span>
+            </div>
+          </div>
+
+          <!-- Field 3: Subject -->
+          <div class="form-group">
+            <div class="label-row">
+              <div class="label-icon"><i class="fa-solid fa-book-bookmark"></i></div>
+              <div class="label-text">
+                <span class="label-primary" data-i18n="subject_label">موضوع الرسالة</span>
+                <span class="label-secondary">Subject</span>
+              </div>
+              <!-- Subject Templates Dropdown -->
+              <div class="quick-dropdown">
+                <button type="button" class="btn-quick-template" onclick="toggleDropdown('subjectTemplatesList')">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  <span data-i18n="suggest_subjects">نماذج جاهزة</span>
+                  <i class="fa-solid fa-chevron-down chevron-icon"></i>
+                </button>
+                <div class="dropdown-menu" id="subjectTemplatesList">
+                  <button type="button" onclick="applySubjectTemplate('Job Application – Software Developer')">Job Application – Software Developer</button>
+                  <button type="button" onclick="applySubjectTemplate('طلب توظيف - مطور برمجيات متكامل')">طلب توظيف - مطور برمجيات متكامل</button>
+                  <button type="button" onclick="applySubjectTemplate('Job Application – Data Analyst / BI')">Job Application – Data Analyst / BI</button>
+                  <button type="button" onclick="applySubjectTemplate('طلب توظيف - محاسب مالي / محاسبة')">طلب توظيف - محاسب مالي / محاسبة</button>
+                  <button type="button" onclick="applySubjectTemplate('Job Application – Digital Marketing Specialist')">Job Application – Digital Marketing Specialist</button>
+                  <button type="button" onclick="applySubjectTemplate('طلب توظيف - خريج جديد طموح')">طلب توظيف - خريج جديد طموح</button>
+                </div>
+              </div>
+            </div>
+            <div class="input-wrapper no-icon">
+              <input 
+                type="text" 
+                id="emailSubject" 
+                class="form-control" 
+                placeholder="Job Application – Software Developer" 
+                required
+              >
+            </div>
+          </div>
+
+          <!-- Field 4: Email Message -->
+          <div class="form-group">
+            <div class="label-row">
+              <div class="label-icon"><i class="fa-solid fa-file-lines"></i></div>
+              <div class="label-text">
+                <span class="label-primary" data-i18n="message_label">نص الرسالة</span>
+                <span class="label-secondary">Email Message</span>
+              </div>
+              <!-- Cover Letter Template Pills -->
+              <div class="template-pills">
+                <button type="button" class="pill-btn active" onclick="loadMessageTemplate('standard')">قياسي</button>
+                <button type="button" class="pill-btn" onclick="loadMessageTemplate('tech')">تقني</button>
+                <button type="button" class="pill-btn" onclick="loadMessageTemplate('fresh')">خريج جديد</button>
+                <button type="button" class="pill-btn" onclick="loadMessageTemplate('arabic_formal')">عربي رسمي</button>
+              </div>
+            </div>
+            
+            <div class="textarea-wrapper">
+              <textarea 
+                id="emailMessage" 
+                class="form-control message-textarea" 
+                rows="6" 
+                required
+              >Dear Hiring Manager,
+
+I am writing to express my interest in the [Job Title] position. Please find my CV attached.
+
+Best regards,</textarea>
+              
+              <!-- Quick Variable Insert Pills -->
+              <div class="textarea-toolbar">
+                <span class="toolbar-title" data-i18n="insert_placeholder">إدراج متغير:</span>
+                <button type="button" class="tag-insert-btn" onclick="insertVariable('[Job Title]')">[Job Title]</button>
+                <button type="button" class="tag-insert-btn" onclick="insertVariable('[Company Name]')">[Company Name]</button>
+                <button type="button" class="tag-insert-btn" onclick="insertVariable('[Phone Number]')">[Phone Number]</button>
+                <span class="char-counter" id="charCounter">130 حرف</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Field 5: Upload CV -->
+          <div class="form-group">
+            <div class="label-row">
+              <div class="label-icon"><i class="fa-solid fa-paperclip"></i></div>
+              <div class="label-text">
+                <span class="label-primary" data-i18n="upload_cv_label">إرفاق السيرة الذاتية (اختياري)</span>
+                <span class="label-secondary">Upload Your CV (Optional)</span>
+              </div>
+            </div>
+
+            <!-- Drag and Drop Upload Zone -->
+            <div 
+              class="drop-zone" 
+              id="dropZone"
+              onclick="triggerFileInput()"
+              ondragover="handleDragOver(event)"
+              ondragleave="handleDragLeave(event)"
+              ondrop="handleFileDrop(event)"
+            >
+              <input 
+                type="file" 
+                id="cvFileInput" 
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+                style="display: none;" 
+                onchange="handleFileSelect(event)"
+              >
+              
+              <div class="drop-zone-content" id="dropZonePrompt">
+                <div class="upload-icon-circle">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <div class="upload-text">
+                  <span class="upload-title" data-i18n="upload_prompt_title">اختر ملف السيرة الذاتية أو اسحبه هنا (اختياري)</span>
+                  <span class="upload-subtitle">Choose your CV file or drag it here (optional)</span>
+                </div>
+                <div class="upload-badge" data-i18n="upload_allowed_types">
+                  PDF, DOC, DOCX (Max 5 MB)
+                </div>
+              </div>
+
+              <!-- Uploaded File Preview Card -->
+              <div class="uploaded-file-card hidden" id="uploadedFileCard">
+                <div class="file-card-icon">
+                  <i class="fa-solid fa-file-pdf" id="fileTypeIcon"></i>
+                </div>
+                <div class="file-card-details">
+                  <span class="file-card-name" id="fileNameDisplay">CV_Resume.pdf</span>
+                  <div class="file-card-meta">
+                    <span class="file-card-size" id="fileSizeDisplay">1.2 MB</span>
+                    <span class="file-card-badge">جاهز للإرسال ✓</span>
+                  </div>
+                </div>
+                <div class="file-card-actions">
+                  <button type="button" class="btn-remove-file" onclick="removeUploadedFile(event)" title="حذف الملف">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- Field 6: Send Email Button -->
+          <div class="form-action-row">
+            <button type="submit" class="btn-send-email" id="sendEmailBtn">
+              <span class="btn-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </span>
+              <span class="btn-text" data-i18n="btn_send_email">إرسال الإيميل</span>
+              <span class="btn-subtext">Send Email</span>
+            </button>
+          </div>
+
+          <!-- Privacy and Security assurance -->
+          <div class="security-footer">
+            <i class="fa-solid fa-lock"></i>
+            <span data-i18n="security_notice">حماية بيانات المستخدم وملفاته الشخصية. يتم إرسال نسخة منفصلة لكل مستلم لضمان الخصوصية التامة.</span>
+          </div>
+
+        </form>
+      </section>
+
+      <!-- RIGHT COLUMN: Sidebar Cards -->
+      <aside class="sidebar-column">
+        
+        <!-- Card 1: Promo Hero Card (Matching screenshot) -->
+        <div class="card promo-card">
+          <div class="promo-header">
+            <h2 class="promo-title" data-i18n="promo_title">حقق فرصتك الوظيفية</h2>
+            <h3 class="promo-subtitle">Get Your Dream Job</h3>
+          </div>
+          <div class="promo-illustration-box">
+            <img src="assets/cv_hero.jpg" alt="Get Your Dream Job" class="promo-illustration-img">
+          </div>
+          <div class="promo-footer">
+            <p class="promo-desc-ar" data-i18n="promo_desc_ar">أرسل سيرتك الذاتية بسرعة وسهولة إلى جهات التوظيف.</p>
+            <p class="promo-desc-en">Send your CV quickly and easily to employers.</p>
+          </div>
+        </div>
+
+        <!-- Card 2: Features Card (Matching screenshot) -->
+        <div class="card features-card">
+          <div class="features-header">
+            <h3 class="features-title" data-i18n="features_title">مميزات الموقع</h3>
+            <span class="features-subtitle">Features</span>
+          </div>
+
+          <div class="features-list">
+            
+            <div class="feature-item">
+              <div class="feature-icon-box">
+                <i class="fa-solid fa-paper-plane"></i>
+              </div>
+              <div class="feature-text">
+                <h4 class="feature-item-title" data-i18n="feat_multiple_title">إرسال إلى عدة مستلمين</h4>
+                <p class="feature-item-sub">Send to multiple recipients</p>
+              </div>
+            </div>
+
+            <div class="feature-item">
+              <div class="feature-icon-box">
+                <i class="fa-solid fa-file-circle-check"></i>
+              </div>
+              <div class="feature-text">
+                <h4 class="feature-item-title" data-i18n="feat_upload_title">إرفاق السيرة الذاتية بسهولة</h4>
+                <p class="feature-item-sub">Easily upload your CV</p>
+              </div>
+            </div>
+
+            <div class="feature-item">
+              <div class="feature-icon-box">
+                <i class="fa-solid fa-envelope-open-text"></i>
+              </div>
+              <div class="feature-text">
+                <h4 class="feature-item-title" data-i18n="feat_custom_title">كتابة موضوع ورسالة مخصصة</h4>
+                <p class="feature-item-sub">Custom subject and message</p>
+              </div>
+            </div>
+
+
+          </div>
+        </div>
+
+        <!-- Card 3: Easy & Fast Callout Card (Matching screenshot) -->
+        <div class="callout-card">
+          <div class="callout-icon-box">
+            <i class="fa-solid fa-check"></i>
+          </div>
+          <div class="callout-content">
+            <h4 class="callout-title" data-i18n="callout_title">سهلة الاستخدام وسريعة</h4>
+            <span class="callout-subtitle">Easy to use and fast</span>
+            <p class="callout-desc-ar" data-i18n="callout_desc_ar">ابدأ الآن وأرسل سيرتك الذاتية إلى الشركات التي ترغب بها.</p>
+            <p class="callout-desc-en">Start now and send your CV to the companies you want.</p>
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Modal 1: Real-time Sending Progress & Results -->
+  <div class="modal-overlay" id="sendingProgressModal">
+    <div class="modal-card progress-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <i class="fa-solid fa-paper-plane modal-header-icon"></i>
+          <div>
+            <h3 class="modal-title" id="progressModalTitle" data-i18n="sending_progress_title">جاري إرسال السيرة الذاتية...</h3>
+            <p class="modal-subtitle" id="progressModalSubtitle">يرجى الانتظار بينما نرسل رسائلك إلى الشركات</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn hidden" id="closeProgressBtn" onclick="closeModal('sendingProgressModal')">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- Animated Progress Indicator -->
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="progressBarFill" style="width: 15%;"></div>
+        </div>
+        <div class="progress-stats-row">
+          <span class="progress-percent" id="progressPercent">15%</span>
+          <span class="progress-count" id="progressCount">جاري التجهيز...</span>
+        </div>
+
+        <!-- Sending Step Timeline -->
+        <div class="steps-timeline">
+          <div class="step-item done" id="step1">
+            <span class="step-badge"><i class="fa-solid fa-check"></i></span>
+            <span class="step-label" data-i18n="step_validate">فحص البيانات والملفات</span>
+          </div>
+          <div class="step-item active" id="step2">
+            <span class="step-badge"><i class="fa-solid fa-spinner fa-spin"></i></span>
+            <span class="step-label" data-i18n="step_attachment">تجهيز ملف السيرة الذاتية</span>
+          </div>
+          <div class="step-item pending" id="step3">
+            <span class="step-badge"><i class="fa-solid fa-envelope"></i></span>
+            <span class="step-label" data-i18n="step_dispatch">إرسال الرسائل للمستلمين</span>
+          </div>
+          <div class="step-item pending" id="step4">
+            <span class="step-badge"><i class="fa-solid fa-flag-checkered"></i></span>
+            <span class="step-label" data-i18n="step_report">تقرير التسليم النهائي</span>
+          </div>
+        </div>
+
+        <!-- Recipients Real-time Status Table -->
+        <div class="results-table-container hidden" id="resultsTableContainer">
+          <div class="table-header-title">
+            <i class="fa-solid fa-list-check"></i>
+            <span data-i18n="delivery_report">تقرير التسليم لكل بريد إلكتروني:</span>
+          </div>
+          <div class="results-table" id="resultsTableBody">
+            <!-- Dynamic rows will be inserted here -->
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer hidden" id="progressModalFooter">
+        <button type="button" class="btn-modal-secondary" onclick="exportDeliveryReport()">
+          <i class="fa-solid fa-file-arrow-down"></i>
+          <span data-i18n="export_report_btn">تحميل تقرير الإرسال (PDF/Text)</span>
+        </button>
+        <button type="button" class="btn-modal-primary" onclick="closeModal('sendingProgressModal')">
+          <i class="fa-solid fa-check"></i>
+          <span data-i18n="done_btn">تم، إغلاق</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Bulk Email Import Modal -->
+  <div class="modal-overlay" id="bulkEmailModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <i class="fa-solid fa-paste modal-header-icon"></i>
+          <div>
+            <h3 class="modal-title" data-i18n="bulk_modal_title">إضافة عدة عناوين بريد إلكتروني دفعة واحدة</h3>
+            <p class="modal-subtitle">الصق قائمة العناوين مفصولة بسطور جديدة أو فواصل</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeModal('bulkEmailModal')">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <label class="modal-input-label" data-i18n="bulk_textarea_label">قائمة البريد الإلكتروني للمستلمين:</label>
+        <textarea 
+          id="bulkEmailsTextarea" 
+          class="form-control bulk-textarea" 
+          rows="6" 
+          placeholder="hr@company1.com&#10;jobs@company2.com&#10;careers@techfirm.com"
+          dir="ltr"
+        ></textarea>
+        <p class="bulk-info-note">
+          <i class="fa-solid fa-circle-info"></i>
+          <span data-i18n="bulk_info_note">يقوم النظام تلقائياً بتنظيف العناوين المكررة واستبعاد العناوين غير الصالحة.</span>
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-modal-secondary" onclick="closeModal('bulkEmailModal')" data-i18n="cancel_btn">إلغاء</button>
+        <button type="button" class="btn-modal-primary" onclick="confirmBulkEmails()">
+          <i class="fa-solid fa-plus"></i>
+          <span data-i18n="add_emails_btn">إضافة العناوين</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: دليل الاستخدام (User Guide) -->
+  <div class="modal-overlay" id="guideModal">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <i class="fa-solid fa-book-open modal-header-icon"></i>
+          <div>
+            <h3 class="modal-title" data-i18n="guide_modal_title">دليل استخدام موقع إرسال السيرة الذاتية</h3>
+            <p class="modal-subtitle">خطوات بسيطة ونصائح ذهبية لإيصال سيرتك الذاتية لأكبر عدد من مسؤولي التوظيف</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeModal('guideModal')">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body guide-content">
+        
+        <!-- Step 1 -->
+        <div class="guide-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4 data-i18n="guide_step1_title">إدخال بريدك الإلكتروني كمرسل</h4>
+            <p data-i18n="guide_step1_desc">أدخل بريدك الرسمي (يفضل استخدام بريد احترافي مثل yourname@gmail.com). هذا البريد هو الذي سيستقبل ردود مسؤولي التوظيف ودعوات المقابلات.</p>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="guide-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4 data-i18n="guide_step2_title">إضافة المستلمين (الشركات وجهات التوظيف)</h4>
+            <p data-i18n="guide_step2_desc">يمكنك كتابة البريد ثم الضغط على Enter أو لصق عدة إيميلات دفعة واحدة بواسطة زر "لصق مجمّع". يتم إرسال رسالة منفصلة تماماً لكل شركة لحفظ الخصوصية.</p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="guide-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4 data-i18n="guide_step3_title">اختيار موضوع ملفت ورسالة تقديم احترافية</h4>
+            <p data-i18n="guide_step3_desc">اختر من النماذج الجاهزة أو اكتب موضوعاً واضحاً يذكر المسمى الوظيفي. في الرسالة، أظهر حماسك وأبرز أهم مهاراتك بشكل مختصر ومباشر.</p>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="guide-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4 data-i18n="guide_step4_title">إرفاق السيرة الذاتية والضغط على إرسال</h4>
+            <p data-i18n="guide_step4_desc">ارفع ملفك بصيغة PDF أو DOCX (بحجم حتى 5 ميغابايت). بعد الضغط على إرسال، ستظهر لك شاشة تقدم حية وحالة تسليم كل رسالة بشكل مفصل.</p>
+          </div>
+        </div>
+
+        <!-- Golden Tips Box -->
+        <div class="tips-box">
+          <div class="tips-box-header">
+            <i class="fa-solid fa-lightbulb"></i>
+            <strong data-i18n="guide_tips_title">نصائح لزيادة فرص قبول سيرتك الذاتية:</strong>
+          </div>
+          <ul class="tips-list">
+            <li data-i18n="guide_tip1">احرص على تسمية ملف السيرة الذاتية باسمك ومسماك الوظيفي (مثال: Tareq_Alzarhat_Frontend_Developer.pdf).</li>
+            <li data-i18n="guide_tip2">تجنب إرسال الإيميلات في عطلة نهاية الأسبوع؛ الأوقات المثالية هي صباح الأحد إلى صباح الخميس.</li>
+            <li data-i18n="guide_tip3">تأكد دائماً من صحة رقم هاتفك ورابط حسابك في LinkedIn داخل السيرة الذاتية.</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-modal-primary" onclick="closeModal('guideModal')" data-i18n="got_it_btn">فهمت ذلك، ابدأ الآن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: تواصل معنا (Contact Us) -->
+  <div class="modal-overlay" id="contactModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <i class="fa-solid fa-headset modal-header-icon"></i>
+          <div>
+            <h3 class="modal-title" data-i18n="contact_modal_title">تواصل مع فريق الدعم والمطور</h3>
+            <p class="modal-subtitle">نحن هنا لمساعدتك في أي استفسار أو اقتراح لتطوير المنصة</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeModal('contactModal')">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="contactForm" onsubmit="handleContactSubmit(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="modal-input-label" data-i18n="contact_name_label">الاسم الكامل:</label>
+            <input type="text" id="contactName" class="form-control" placeholder="أدخل اسمك الكريم" required>
+          </div>
+          <div class="form-group">
+            <label class="modal-input-label" data-i18n="contact_email_label">البريد الإلكتروني للرد عليك:</label>
+            <input type="email" id="contactEmail" class="form-control" placeholder="yourname@domain.com" required dir="ltr">
+          </div>
+          <div class="form-group">
+            <label class="modal-input-label" data-i18n="contact_message_label">نص الرسالة أو الاستفسار:</label>
+            <textarea id="contactMessage" class="form-control" rows="4" placeholder="اكتب استفسارك أو ملاحظتك هنا..." required></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-modal-secondary" onclick="closeModal('contactModal')" data-i18n="cancel_btn">إلغاء</button>
+          <button type="submit" class="btn-modal-primary" id="sendContactBtn">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span data-i18n="send_contact_btn">إرسال الرسالة</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 5: إعدادات البريد و SMTP (Settings) -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <i class="fa-solid fa-sliders modal-header-icon"></i>
+          <div>
+            <h3 class="modal-title" data-i18n="settings_modal_title">إعدادات خادم البريد (SMTP Settings)</h3>
+            <p class="modal-subtitle">اختر بين نمط المحاكاة السريعة أو الربط مع بريدك الحقيقي</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeModal('settingsModal')">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- Mode selection radio tabs -->
+        <div class="settings-tab-group">
+          <label class="settings-radio-card" id="modeCardReal">
+            <input type="radio" name="deliveryMode" value="real" checked onchange="toggleSmtpMode('real')">
+            <div class="radio-card-content">
+              <div class="radio-card-title">
+                <i class="fa-solid fa-server"></i>
+                <strong data-i18n="mode_real_title">ربط خادم بريد حقيقي (SMTP)</strong>
+              </div>
+              <p data-i18n="mode_real_desc">إرسال رسائل بريد فعلية تصل إلى صندوق الوارد الخاص بجهات التوظيف (Gmail App Password, Outlook, Custom).</p>
+            </div>
+          </label>
+
+          <label class="settings-radio-card" id="modeCardSim">
+            <input type="radio" name="deliveryMode" value="simulation" onchange="toggleSmtpMode('simulation')">
+            <div class="radio-card-content">
+              <div class="radio-card-title">
+                <i class="fa-solid fa-bolt"></i>
+                <strong data-i18n="mode_sim_title">نمط المحاكاة الذكي (موصى به للتجربة السريعة)</strong>
+              </div>
+              <p data-i18n="mode_sim_desc">يختبر كامل العملية من التحقق والمرفقات وإصدار تقرير التسليم بدون الحاجة لكلمات مرور أو إعدادات معقدة.</p>
+            </div>
+          </label>
+        </div>
+
+        <!-- SMTP Configuration Form (Toggled) -->
+        <div class="smtp-form-box" id="smtpConfigBox">
+          <div class="form-group">
+            <label class="modal-input-label">مزود الخدمة:</label>
+            <select id="smtpProvider" class="form-control" onchange="handleSmtpProviderChange()">
+              <option value="gmail" selected>Gmail (Google App Password)</option>
+              <option value="outlook">Outlook / Hotmail / Office365</option>
+              <option value="custom">خادم مخصص (Custom SMTP Host)</option>
+            </select>
+          </div>
+
+          <div class="smtp-custom-fields hidden" id="customSmtpFields">
+            <div class="form-row">
+              <div class="form-group col-8">
+                <label class="modal-input-label">عنوان الخادم (Host):</label>
+                <input type="text" id="smtpHost" class="form-control" placeholder="mail.yourdomain.com" dir="ltr">
+              </div>
+              <div class="form-group col-4">
+                <label class="modal-input-label">المنفذ (Port):</label>
+                <input type="number" id="smtpPort" class="form-control" placeholder="465" dir="ltr">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="modal-input-label">البريد الإلكتروني للحساب:</label>
+            <input type="email" id="smtpUser" class="form-control" placeholder="your-email@gmail.com" value="alqashar0@gmail.com" dir="ltr">
+          </div>
+
+          <div class="form-group">
+            <label class="modal-input-label">كلمة مرور التطبيق (App Password):</label>
+            <input type="password" id="smtpPass" class="form-control" placeholder="••••••••••••••••" value="nddg anzt zdke ineb" dir="ltr">
+            <small class="smtp-help-text" id="smtpHelpText">
+              * بالنسبة لـ Gmail: تم ضبط كلمة مرور التطبيقات المكونة من 16 حرفاً بنجاح.
+            </small>
+          </div>
+
+          <button type="button" class="btn-test-smtp" id="testSmtpBtn" onclick="testSmtpConnection()">
+            <i class="fa-solid fa-plug"></i>
+            <span id="testSmtpText">اختبار الاتصال بالخادم الآن</span>
+          </button>
+          <div class="test-smtp-result hidden" id="testSmtpResult"></div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-modal-secondary" onclick="closeModal('settingsModal')" data-i18n="cancel_btn">إلغاء</button>
+        <button type="button" class="btn-modal-primary" onclick="saveSmtpSettings()">
+          <i class="fa-solid fa-floppy-disk"></i>
+          <span data-i18n="save_settings_btn">حفظ الإعدادات</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 6: سجل الإرسال (History Modal) -->
+  <div class="modal-overlay" id="historyModal">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <i class="fa-solid fa-clock-rotate-left modal-header-icon"></i>
+          <div>
+            <h3 class="modal-title" data-i18n="history_modal_title">سجل طلبات التوظيف المرسلة</h3>
+            <p class="modal-subtitle">تتبع الشركات التي قمت بالتقديم إليها والملفات وتواريخ الإرسال</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeModal('historyModal')">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="history-actions-row">
+          <span class="history-total-label" id="historyTotalLabel">إجمالي الطلبات: 0</span>
+          <button type="button" class="btn-clear-history" onclick="clearSentHistory()">
+            <i class="fa-solid fa-trash-can"></i>
+            <span data-i18n="clear_history_btn">مسح السجل</span>
+          </button>
+        </div>
+
+        <div class="history-list" id="historyListContainer">
+          <!-- Dynamic history cards inserted here -->
+          <div class="empty-history-state" id="emptyHistoryState">
+            <i class="fa-regular fa-folder-open empty-icon"></i>
+            <h4 data-i18n="no_history_title">لا توجد رسائل مرسلة بعد</h4>
+            <p data-i18n="no_history_desc">عند إرسال السيرة الذاتية ستظهر جميع تفاصيل الإرسال وحالة المستلمين هنا.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-modal-primary" onclick="closeModal('historyModal')" data-i18n="close_btn">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Custom Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
