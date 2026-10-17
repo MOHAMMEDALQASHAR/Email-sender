@@ -576,6 +576,7 @@ function initMessageCharCounter() {
 function updateCharCounter() {
   const textarea = document.getElementById('emailMessage');
   const counter = document.getElementById('charCounter');
+  if (!counter || !textarea) return;
   const count = textarea.value.length;
   counter.textContent = `${count} ${state.lang === 'ar' ? 'حرف' : 'characters'}`;
 }

@@ -165,33 +165,10 @@
                 <span class="label-primary" data-i18n="subject_label">موضوع الرسالة</span>
                 <span class="label-secondary">Subject</span>
               </div>
-              <!-- Subject Templates Dropdown -->
-              <div class="quick-dropdown">
-                <button type="button" class="btn-quick-template" onclick="toggleDropdown('subjectTemplatesList')">
-                  <i class="fa-solid fa-wand-magic-sparkles"></i>
-                  <span data-i18n="suggest_subjects">نماذج جاهزة</span>
-                  <i class="fa-solid fa-chevron-down chevron-icon"></i>
-                </button>
-                <div class="dropdown-menu" id="subjectTemplatesList">
-                  <button type="button" onclick="applySubjectTemplate('Job Application – Software Developer')">Job
-                    Application – Software Developer</button>
-                  <button type="button" onclick="applySubjectTemplate('طلب توظيف - مطور برمجيات متكامل')">طلب توظيف -
-                    مطور برمجيات متكامل</button>
-                  <button type="button" onclick="applySubjectTemplate('Job Application – Data Analyst / BI')">Job
-                    Application – Data Analyst / BI</button>
-                  <button type="button" onclick="applySubjectTemplate('طلب توظيف - محاسب مالي / محاسبة')">طلب توظيف -
-                    محاسب مالي / محاسبة</button>
-                  <button type="button"
-                    onclick="applySubjectTemplate('Job Application – Digital Marketing Specialist')">Job Application –
-                    Digital Marketing Specialist</button>
-                  <button type="button" onclick="applySubjectTemplate('طلب توظيف - خريج جديد طموح')">طلب توظيف - خريج
-                    جديد طموح</button>
-                </div>
-              </div>
             </div>
             <div class="input-wrapper no-icon">
               <input type="text" id="emailSubject" class="form-control"
-                placeholder="Job Application – Software Developer" required>
+                placeholder="اكتب موضوع الرسالة هنا..." required>
             </div>
           </div>
 
@@ -206,15 +183,6 @@
 
             <div class="textarea-wrapper">
               <textarea id="emailMessage" class="form-control message-textarea" rows="6" placeholder="اكتب نص رسالتك هنا..." required></textarea>
-
-              <!-- Quick Variable Insert Pills -->
-              <div class="textarea-toolbar">
-                <span class="toolbar-title" data-i18n="insert_placeholder">إدراج متغير:</span>
-                <button type="button" class="tag-insert-btn" onclick="insertVariable('[Job Title]')">[Job Title]</button>
-                <button type="button" class="tag-insert-btn" onclick="insertVariable('[Company Name]')">[Company Name]</button>
-                <button type="button" class="tag-insert-btn" onclick="insertVariable('[Phone Number]')">[Phone Number]</button>
-                <span class="char-counter" id="charCounter">0 حرف</span>
-              </div>
             </div>
           </div>
 
