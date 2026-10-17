@@ -729,6 +729,7 @@ html[dir="ltr"] .dropdown-menu button {
 }
 
 .message-textarea {
+  width: 100%;
   min-height: 140px;
   resize: vertical;
   line-height: 1.65;

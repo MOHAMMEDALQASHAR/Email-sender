@@ -192,7 +192,7 @@ app.post('/api/send', upload.single('cv'), async (req, res) => {
 
     const deliveryResults = [];
 
-    console.log(`[SEND REQUEST] From: ${senderEmail}, Mode: ${mode}, Recipients: ${validRecipients.length}, Real: ${shouldSendReal}`);
+    console.log(`[SEND REQUEST] Mode: ${mode}, Recipients count: ${validRecipients.length}, Real: ${shouldSendReal}`);
 
     if (shouldSendReal && userToUse && passToUse) {
       // Build Nodemailer transporter
@@ -222,9 +222,10 @@ app.post('/api/send', upload.single('cv'), async (req, res) => {
       ] : [];
 
       // Send personalized email to each recipient separately for privacy
-      for (const recipient of validRecipients) {
+      for (let i = 0; i < validRecipients.length; i++) {
+        const recipient = validRecipients[i];
         try {
-          console.log(`[DISPATCHING] Sending to: ${recipient}...`);
+          console.log(`[DISPATCHING] Sending email ${i + 1}/${validRecipients.length}...`);
           const mailOptions = {
             from: `"${senderEmail}" <${userToUse}>`,
             replyTo: senderEmail,
@@ -244,7 +245,7 @@ app.post('/api/send', upload.single('cv'), async (req, res) => {
           };
 
           const info = await transporter.sendMail(mailOptions);
-          console.log(`[SENT SUCCESS] To: ${recipient}, MessageId: ${info.messageId}`);
+          console.log(`[SENT SUCCESS] Email ${i + 1} sent successfully.`);
           deliveryResults.push({
             recipient: recipient,
             status: 'sent',
@@ -252,7 +253,7 @@ app.post('/api/send', upload.single('cv'), async (req, res) => {
             timestamp: new Date().toISOString()
           });
         } catch (err) {
-          console.error(`[SEND ERROR] To: ${recipient}:`, err.message);
+          console.error(`[SEND ERROR] Email ${i + 1} failed:`, err.message);
           deliveryResults.push({
             recipient: recipient,
             status: 'failed',
@@ -275,16 +276,14 @@ app.post('/api/send', upload.single('cv'), async (req, res) => {
       }
     }
 
-    // Clean up temporary uploaded file if desired, or keep for session
-    setTimeout(() => {
-      if (uploadedFilePath && fs.existsSync(uploadedFilePath)) {
-        try {
-          fs.unlinkSync(uploadedFilePath);
-        } catch (e) {
-          // ignore cleanup error
-        }
+    // Immediately clean up temporary uploaded file for strict privacy
+    if (uploadedFilePath && fs.existsSync(uploadedFilePath)) {
+      try {
+        fs.unlinkSync(uploadedFilePath);
+      } catch (e) {
+        // ignore cleanup error
       }
-    }, 60000); // 1 minute cleanup
+    }
 
     const successCount = deliveryResults.filter(r => r.status === 'sent').length;
     const failCount = deliveryResults.filter(r => r.status === 'failed').length;
